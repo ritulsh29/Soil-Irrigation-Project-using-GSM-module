@@ -1,0 +1,26 @@
+PIN1: I/O , T0 ( Timer0 External Counter Input) ,XCK : USART External Clock I/O
+PIN2: I/O, T1 (Timer1 External Counter Input)
+PIN3: I/O, AIN0: Analog Comparator Positive Input, INT2: External Interrupt 2 Input
+PIN4: I/O, AIN1: Analog Comparator Negative Input, OC0: Timer0 Output Compare Match
+Output
+PIN9: Reset Pin, Active Low Reset
+PIN10:VCC=+5V
+PIN11: GND
+PIN12:XTAL2
+PIN13:XTAL1
+PIN14:(RXD) ,I/O PIN 0,USART Serial Communication Interface
+PIN15: (TXD) ,I/O Pin 1,USART Serial Communication Interface
+PIN16:(INT0),I/O Pin 2, External Interrupt INT0
+PIN17:(INT1),I/O Pin 3, External Interrupt INT1
+PIN18:(OC1B),I/O Pin 4, PWM Channel Outputs
+PIN19:(OC1A),I/O Pin 5, PWM Channel Outputs
+PIN20:(ICP), I/O Pin 6, Timer/Counter1 Input Capture Pin
+PIN21:(OC2),I/O Pin 7,Timer/Counter2 Output Compare Match Output
+PIN22:(SCL),I/O Pin 0,TWI Interface
+PIN23:(SDA),I/O Pin 1,TWI Interface
+PIN24-27: JTAG INTERFACE
+PIN28 : (TOSC1),I/O Pin 6,Timer Oscillator Pin 1
+PIN29 : (TOSC2),I/O Pin 7,Timer Oscillator Pin 2
+PIN30 : AVCC (for ADC)
+PIN31 : GND (for ADC)
+PIN33 – PIN40: PAx: I/O,ADCx (Where x is 7 – 0)
