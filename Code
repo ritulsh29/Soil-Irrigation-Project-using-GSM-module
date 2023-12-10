@@ -1,0 +1,791 @@
+#include <Arduino.h> 
+
+#include <LiquidCrystal.h> 
+
+ 
+
+LiquidCrystal lcd(2, 3, 4, 5, 6, 7); 
+
+ 
+
+#define sensorA A0 
+
+#define sensorB A1 
+
+#define sensorC A2 
+
+#define sensorD A3 
+
+#define trigA A4 
+
+#define trigB A5 
+
+#define trigC A6 
+
+#define trigD A7 
+
+#define relayA 8 
+
+#define relayB 9 
+
+#define relayC 10 
+
+#define relayD 11 
+
+ 
+
+String sms = ""; 
+
+String mobile = "+918381817484"; 
+
+int soilResA = 0; 
+
+int soilResB = 0; 
+
+int soilResC = 0; 
+
+int soilResD = 0; 
+
+int trigValueA = 0; 
+
+int trigValueB = 0; 
+
+int trigValueC = 0; 
+
+int trigValueD = 0; 
+
+int mainRes = 0; 
+
+int res = 0; 
+
+int cnt = 0; 
+
+int interval = 0; 
+
+int trigTime = 10; 
+
+bool relay1 = false; 
+
+bool relay2 = false; 
+
+bool relay3 = false; 
+
+bool relay4 = false; 
+
+bool gsmFound = false; 
+
+bool smsOk = false; 
+
+ 
+
+boolean sendSms(String t, String m) { 
+
+  boolean ok = false; 
+
+  String mobile = t; 
+
+  String sms = m; 
+
+  Serial.setTimeout(2000); 
+
+  delay(2000); 
+
+  Serial.println("AT\r\n"); 
+
+  ok = Serial.find("OK"); 
+
+  delay(100); 
+
+  if (!ok) 
+
+    return false; 
+
+  Serial.println("AT+CMGF=1\r\n"); 
+
+  ok = Serial.find("OK"); 
+
+  delay(100); 
+
+  if (!ok) 
+
+    return false; 
+
+  Serial.print("AT+CMGS="); 
+
+  Serial.print(char(34)); 
+
+  Serial.print(mobile); 
+
+  Serial.print(char(34)); 
+
+  Serial.print("\r\n"); 
+
+  ok = Serial.find(">"); 
+
+  Serial.print(sms); 
+
+  Serial.print("\r\n"); 
+
+  Serial.print(char(26)); 
+
+  Serial.setTimeout(10000); 
+
+  ok = Serial.find("+CMG"); 
+
+  return ok; 
+
+} 
+
+ 
+
+boolean initGsm(int t) { 
+
+  delay(t); 
+
+  boolean ok = false; 
+
+  Serial.setTimeout(2000); 
+
+  Serial.println("AT\r\n"); 
+
+  ok = Serial.find("OK"); 
+
+  delay(100); 
+
+  if (!ok) 
+
+    return false; 
+
+  ok = false; 
+
+  Serial.println("ATE0\r\n"); 
+
+  ok = Serial.find("OK"); 
+
+  delay(100); 
+
+  if (!ok) 
+
+    return false; 
+
+  ok = false; 
+
+  Serial.println("AT+CMGF=1\r\n"); 
+
+  ok = Serial.find("OK"); 
+
+  delay(100); 
+
+  return ok; 
+
+} 
+
+ 
+
+void getSoilValue() { 
+
+  mainRes = 0; 
+
+  res = 0; 
+
+  for (int i = 0; i < 16; i++) { 
+
+    res = analogRead(A0); 
+
+    mainRes += res; 
+
+    delay(5); 
+
+  } 
+
+  mainRes = mainRes >> 4; 
+
+  soilResA = map(mainRes, 0, 1023, 100, 0); 
+
+ 
+
+  mainRes = 0; 
+
+  res = 0; 
+
+  for (int i = 0; i < 16; i++) { 
+
+    res = analogRead(A1); 
+
+    mainRes += res; 
+
+    delay(5); 
+
+  } 
+
+  mainRes = mainRes >> 4; 
+
+  soilResB = map(mainRes, 0, 1023, 100, 0); 
+
+ 
+
+  mainRes = 0; 
+
+  res = 0; 
+
+  for (int i = 0; i < 16; i++) { 
+
+    res = analogRead(A2); 
+
+    mainRes += res; 
+
+    delay(5); 
+
+  } 
+
+  mainRes = mainRes >> 4; 
+
+  soilResC = map(mainRes, 0, 1023, 100, 0); 
+
+ 
+
+  mainRes = 0; 
+
+  res = 0; 
+
+  for (int i = 0; i < 16; i++) { 
+
+    res = analogRead(A3); 
+
+    mainRes += res; 
+
+    delay(5); 
+
+  } 
+
+  mainRes = mainRes >> 4; 
+
+  soilResD = map(mainRes, 0, 1023, 100, 0); 
+
+} 
+
+ 
+
+void getTrigValue() { 
+
+  mainRes = 0; 
+
+  res = 0; 
+
+  for (int i = 0; i < 16; i++) { 
+
+    res = analogRead(A4); 
+
+    mainRes += res; 
+
+    delay(5); 
+
+  } 
+
+  mainRes = mainRes >> 4; 
+
+  trigValueA = map(mainRes, 0, 1023, 10, 100); 
+
+ 
+
+  mainRes = 0; 
+
+  res = 0; 
+
+  for (int i = 0; i < 16; i++) { 
+
+    res = analogRead(A5); 
+
+    mainRes += res; 
+
+    delay(5); 
+
+  } 
+
+  mainRes = mainRes >> 4; 
+
+  trigValueB = map(mainRes, 0, 1023, 10, 100); 
+
+ 
+
+  mainRes = 0; 
+
+  res = 0; 
+
+  for (int i = 0; i < 16; i++) { 
+
+    res = analogRead(A6); 
+
+    mainRes += res; 
+
+    delay(5); 
+
+  } 
+
+  mainRes = mainRes >> 4; 
+
+  trigValueC = map(mainRes, 0, 1023, 10, 100); 
+
+ 
+
+  mainRes = 0; 
+
+  res = 0; 
+
+  for (int i = 0; i < 16; i++) { 
+
+    res = analogRead(A7); 
+
+    mainRes += res; 
+
+    delay(5); 
+
+  } 
+
+  mainRes = mainRes >> 4; 
+
+  trigValueD = map(mainRes, 0, 1023, 10, 100); 
+
+} 
+
+ 
+
+void updateSoilValue() { 
+
+  lcd.setCursor(6, 0); 
+
+  lcd.print(soilResA); 
+
+  lcd.print("% "); 
+
+  lcd.setCursor(6, 1); 
+
+  lcd.print(soilResB); 
+
+  lcd.print("% "); 
+
+  lcd.setCursor(6, 2); 
+
+  lcd.print(soilResC); 
+
+  lcd.print("% "); 
+
+  lcd.setCursor(6, 3); 
+
+  lcd.print(soilResD); 
+
+  lcd.print("%"); 
+
+  lcd.setCursor(17, 0); 
+
+  lcd.print(trigValueA); 
+
+  lcd.print("%"); 
+
+  lcd.setCursor(17, 1); 
+
+  lcd.print(trigValueB); 
+
+  lcd.print("%"); 
+
+  lcd.setCursor(17, 2); 
+
+  lcd.print(trigValueC); 
+
+  lcd.print("%"); 
+
+  lcd.setCursor(17, 3); 
+
+  lcd.print(trigValueD); 
+
+  lcd.print("%"); 
+
+} 
+
+ 
+
+void compareValue() { 
+
+  if (digitalRead(relayA) == LOW) { 
+
+    if (soilResA < trigValueA - 5) { 
+
+      digitalWrite(relayA, HIGH); 
+
+      relay1 = true; 
+
+    } 
+
+  } 
+
+  if (digitalRead(relayA) == HIGH) { 
+
+    if (soilResA > trigValueA + 5) { 
+
+      digitalWrite(relayA, LOW); 
+
+      relay1 = true; 
+
+      Serial.println("LOW"); 
+
+    } 
+
+  } 
+
+  if (digitalRead(relayB) == LOW) { 
+
+    if (soilResB < trigValueB - 5) { 
+
+      digitalWrite(relayB, HIGH); 
+
+      relay2 = true; 
+
+    } 
+
+  } 
+
+  if (digitalRead(relayB) == HIGH) { 
+
+    if (soilResB > trigValueB + 5) { 
+
+      digitalWrite(relayB, LOW); 
+
+      relay2 = true; 
+
+    } 
+
+  } 
+
+  if (digitalRead(relayC) == LOW) { 
+
+    if (soilResC < trigValueC - 5) { 
+
+      digitalWrite(relayC, HIGH); 
+
+      relay3 = true; 
+
+    } 
+
+  } 
+
+  if (digitalRead(relayC) == HIGH) { 
+
+    if (soilResC > trigValueC + 5) { 
+
+      digitalWrite(relayC, LOW); 
+
+      relay3 = true; 
+
+    } 
+
+  } 
+
+  if (digitalRead(relayD) == LOW) { 
+
+    if (soilResD < trigValueD - 5) { 
+
+      digitalWrite(relayD, HIGH); 
+
+      relay4 = true; 
+
+    } 
+
+  } 
+
+  if (digitalRead(relayD) == HIGH) { 
+
+    if (soilResD > trigValueD + 5) { 
+
+      digitalWrite(relayD, LOW); 
+
+      relay4 = true; 
+
+    } 
+
+  } 
+
+} 
+
+ 
+
+void setup() { 
+
+  delay(500); 
+
+  Serial.begin(9600); 
+
+  delay(100); 
+
+  pinMode(relayA, OUTPUT); 
+
+  pinMode(relayB, OUTPUT); 
+
+  pinMode(relayC, OUTPUT); 
+
+  pinMode(relayD, OUTPUT); 
+
+  digitalWrite(relayA, LOW); 
+
+  digitalWrite(relayB, LOW); 
+
+  digitalWrite(relayC, LOW); 
+
+  digitalWrite(relayD, LOW); 
+
+  lcd.begin(20, 4); 
+
+  lcd.clear(); 
+
+  lcd.home(); 
+
+  lcd.print(" Soil Moisture "); 
+
+  lcd.setCursor(0, 1); 
+
+  lcd.print(" Controller"); 
+
+  delay(5000); 
+
+  lcd.clear(); 
+
+  lcd.home(); 
+
+  lcd.print("Gsm Initing.."); 
+
+  delay(5000); 
+
+  do { 
+
+    gsmFound = initGsm(1000); 
+
+    lcd.setCursor(0, 1); 
+
+    lcd.print("Wait For Gsm "); 
+
+    delay(1000); 
+
+    lcd.setCursor(0, 1); 
+
+  } while (!gsmFound); 
+
+  lcd.setCursor(0, 1); 
+
+  lcd.print("Gsm Inited Ok"); 
+
+  delay(2000); 
+
+  lcd.clear(); 
+
+  lcd.home(); 
+
+  lcd.print("SoilA-"); 
+
+  lcd.setCursor(11, 0); 
+
+  lcd.print("TrigA-"); 
+
+  lcd.setCursor(0, 1); 
+
+  lcd.print("SoilB-"); 
+
+  lcd.setCursor(11, 1); 
+
+  lcd.print("TrigB-"); 
+
+  lcd.setCursor(0, 2); 
+
+  lcd.print("SoilC-"); 
+
+  lcd.setCursor(11, 2); 
+
+  lcd.print("TrigC-"); 
+
+  lcd.setCursor(0, 3); 
+
+  lcd.print("SoilD-"); 
+
+  lcd.setCursor(11, 3); 
+
+  lcd.print("TrigD-"); 
+
+} 
+
+ 
+
+void loop() { 
+
+  relay1 = false; 
+
+  relay2 = false; 
+
+  relay3 = false; 
+
+  relay4 = false; 
+
+  getSoilValue(); 
+
+  getTrigValue(); 
+
+  updateSoilValue(); 
+
+  compareValue(); 
+
+  interval++; 
+
+  if (interval >= 60) { 
+
+    lcd.clear(); 
+
+    lcd.home(); 
+
+    lcd.print("Sending sms"); 
+
+    sms = "SoilRes-1:"; 
+
+    sms += soilResA; 
+
+    sms += "%\n"; 
+
+    sms += "Trig-1:"; 
+
+    sms += trigValueA; 
+
+    sms += "%\n"; 
+
+    if (digitalRead(relayA)) { 
+
+      sms += "Relay-1 On\n"; 
+
+    } else { 
+
+      sms += "Relay-1 Off\n"; 
+
+    } 
+
+    sms += "\n"; 
+
+    sms += "SoilRes-2:"; 
+
+    sms += soilResB; 
+
+    sms += "%\n"; 
+
+    sms += "Trig-2:"; 
+
+    sms += trigValueB; 
+
+    sms += "%\n"; 
+
+    if (digitalRead(relayB)) { 
+
+      sms += "Relay-2 On\n"; 
+
+    } else { 
+
+      sms += "Relay-2 Off\n"; 
+
+    } 
+
+    sms += "\n"; 
+
+    sms += "SoilRes-3:"; 
+
+    sms += soilResC; 
+
+    sms += "%\n"; 
+
+    sms += "Trig-3:"; 
+
+    sms += trigValueC; 
+
+    sms += "%\n"; 
+
+    if (digitalRead(relayC)) { 
+
+      sms += "Relay-3 On\n"; 
+
+    } else { 
+
+      sms += "Relay-3 Off\n"; 
+
+    } 
+
+    sms += "\n"; 
+
+    sms += "SoilRes-4:"; 
+
+    sms += soilResD; 
+
+    sms += "%\n"; 
+
+    sms += "Trig-4:"; 
+
+    sms += trigValueD; 
+
+    sms += "%\n"; 
+
+    if (digitalRead(relayD)) { 
+
+      sms += "Relay-4 On\n"; 
+
+    } else { 
+
+      sms += "Relay-4 Off\n"; 
+
+    } 
+
+    smsOk = false; 
+
+    do { 
+
+      smsOk = sendSms(mobile, sms); 
+
+      delay(2000); 
+
+    } while (!smsOk); 
+
+    lcd.setCursor(0, 1); 
+
+    lcd.print("Sms Sent Ok"); 
+
+    delay(2000); 
+
+    interval = 0; 
+
+    lcd.clear(); 
+
+    lcd.home(); 
+
+    lcd.print("SoilA-"); 
+
+    lcd.setCursor(11, 0); 
+
+    lcd.print("TrigA-"); 
+
+    lcd.setCursor(0, 1); 
+
+    lcd.print("SoilB-"); 
+
+    lcd.setCursor(11, 1); 
+
+    lcd.print("TrigB-"); 
+
+    lcd.setCursor(0, 2); 
+
+    lcd.print("SoilC-"); 
+
+    lcd.setCursor(11, 2); 
+
+    lcd.print("TrigC-"); 
+
+    lcd.setCursor(0, 3); 
+
+    lcd.print("SoilD-"); 
+
+    lcd.setCursor(11, 3); 
+
+    lcd.print("TrigD-"); 
+
+  } 
+
+} 
